@@ -23,9 +23,6 @@
 + IDEs: Visual Studios Community & Visual Studios Code
 ```
 
-## Additional Resources
-* [MongoDB Entity Framework Core Provider](https://www.mongodb.com/docs/entity-framework/current/#mongodb-entity-framework-core-provider)
-
 ## Programs
 * [Visual Studios Community](https://visualstudio.microsoft.com/vs/community/)
 * [Visual Studios Code](https://code.visualstudio.com/)
