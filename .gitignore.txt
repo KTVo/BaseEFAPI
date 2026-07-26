@@ -1,0 +1,193 @@
+# ==============================
+# .NET / C# build output
+# ==============================
+bin/
+obj/
+out/
+artifacts/
+
+# Build configurations
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+
+# Compiled files
+*.dll
+*.exe
+*.pdb
+*.cache
+*.deps.json
+*.runtimeconfig.json
+
+# NuGet
+*.nupkg
+*.snupkg
+packages/
+.nuget/
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# ==============================
+# Application settings / secrets
+# ==============================
+appsettings.json
+appsettings.*.json
+
+# Allow sanitized example files to be committed
+!appsettings.Example.json
+!appsettings.example.json
+!appsettings.Template.json
+!appsettings.template.json
+
+# .NET user secrets
+secrets.json
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Certificates and private keys
+*.pfx
+*.p12
+*.pem
+*.key
+*.cer
+*.crt
+
+# ==============================
+# Visual Studio
+# ==============================
+.vs/
+*.user
+*.rsuser
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Visual Studio database files
+*.mdf
+*.ldf
+*.ndf
+
+# ==============================
+# JetBrains Rider / IntelliJ
+# ==============================
+.idea/
+*.sln.iml
+
+# ==============================
+# Visual Studio Code
+# ==============================
+.vscode/
+
+# Uncomment these if you want to commit shared VS Code settings
+# !.vscode/settings.json
+# !.vscode/tasks.json
+# !.vscode/launch.json
+# !.vscode/extensions.json
+
+# ==============================
+# ASP.NET Core
+# ==============================
+Properties/PublishProfiles/
+*.pubxml
+*.pubxml.user
+
+# Generated static files
+wwwroot/lib/
+
+# Logs
+logs/
+Logs/
+*.log
+
+# Local databases
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# Test results and coverage
+TestResults/
+coverage/
+coverage-results/
+*.coverage
+*.coveragexml
+*.trx
+*.opencover.xml
+*.coverage.json
+
+# BenchmarkDotNet
+BenchmarkDotNet.Artifacts/
+
+# ==============================
+# macOS
+# ==============================
+.DS_Store
+._*
+.AppleDouble
+.LSOverride
+Icon?
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# macOS network share files
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# ==============================
+# Windows
+# ==============================
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# ==============================
+# Linux
+# ==============================
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ==============================
+# Temporary files
+# ==============================
+*.tmp
+*.temp
+*.bak
+*.backup
+*.swp
+*.swo
+*.orig
+*.old
+
+# ==============================
+# Docker overrides
+# ==============================
+docker-compose.override.yml
+docker-compose.override.yaml
