@@ -23,6 +23,15 @@
 + IDEs: Visual Studios Community & Visual Studios Code
 ```
 
+## Running locally
+
+The project lives at the repository root. With the .NET 10 SDK installed, run:
+
+```sh
+dotnet build
+dotnet run
+```
+
 ## Additional Resources
 * [MongoDB Entity Framework Core Provider](https://www.mongodb.com/docs/entity-framework/current/#mongodb-entity-framework-core-provider)
 
