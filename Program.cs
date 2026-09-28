@@ -4,6 +4,10 @@ using Microsoft.EntityFrameworkCore;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
+// ADD SERVICES TO THE CONTAINER
+builder.Services.AddAuthorization();
+builder.Services.AddAuthentication("Bearer").AddJwtBearer();
+
 string? connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
 if (string.IsNullOrEmpty(connectionString) == true)
@@ -12,7 +16,6 @@ if (string.IsNullOrEmpty(connectionString) == true)
     Environment.Exit(0);
 }
 
-// TODO: ADD DB CONTEXT TO THE CONTAINER
 // REGISTER THE REGISTRATION API DBCONTEXT WITH THE CONTAINER
 builder.Services.AddDbContext<RegistrationDbContext>(options =>
 options.UseSqlServer(

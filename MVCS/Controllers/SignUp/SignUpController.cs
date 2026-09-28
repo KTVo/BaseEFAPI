@@ -1,3 +1,4 @@
+using BaseEFAPI.Helpers.Encryption;
 using BaseEFAPI.MVCS.Services.Registration.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -25,13 +26,14 @@ public class SignUpController(IRegistrationService registrationService) : Contro
             return BadRequest(ExternalMessages.InvalidRequest);
         }
 
+        request.HashedPassword = PasswordEncryption.HashPassword(request.HashedPassword);
+
 
         SignUpResponseModel response = await _registrationService.RegisterUserAsync(new ApplicationUserModel
         {
-            Id = Guid.NewGuid(),
-            Username = request.Username,
+            UserName = request.Username,
             Email = request.Email,
-            HashedPassword = request.HashedPassword,
+            PasswordHash = request.HashedPassword,
             UserType = request.UserType,
             CreatedAt = DateTime.UtcNow
         });
