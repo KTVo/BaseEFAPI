@@ -1,5 +1,8 @@
+using BaseEFAPI.MVCS.Services.Authentication.Implementations;
+using BaseEFAPI.MVCS.Services.Authentication.Interfaces;
 using BaseEFAPI.MVCS.Services.Context;
 using BaseEFAPI.MVCS.Services.Registration.Interfaces;
+using BaseEFAPI.MVCS.Services.SignIn.Implementations;
 using Microsoft.EntityFrameworkCore;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -7,6 +10,7 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 // ADD SERVICES TO THE CONTAINER
 builder.Services.AddAuthorization();
 builder.Services.AddAuthentication("Bearer").AddJwtBearer();
+builder.Services.AddLogging(builder => builder.AddConsole());
 
 string? connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
@@ -37,7 +41,10 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 });
 
 // TODO: ADD SERVICES TO THE CONTAINER
-builder.Services.AddScoped<IRegistrationService, RegistrationService>()
+builder.Services
+    .AddScoped<IRegistrationService, RegistrationService>()
+    .AddScoped<ISignInService, SignInService>()
+    .AddTransient<IJwtTokenService, JwtTokenService>()
     .AddTransient<IUserRepository, UserRepository>();
 
 // Configure the HTTP request pipeline.

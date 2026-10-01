@@ -8,4 +8,7 @@ public sealed class JwtTokenModel
     public DateTime CreatedOn { get; set; }
     public string? EncryptedSecretKey { get; set; }
     public string? JTI { get; set; }
+    public string? UserName { get; set; }
+    public string? Email { get; set; }
+    public string? UserType { get; set; }
 }

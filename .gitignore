@@ -190,3 +190,5 @@ $RECYCLE.BIN/
 # ==============================
 docker-compose.override.yml
 docker-compose.override.yaml
+
+.fake
