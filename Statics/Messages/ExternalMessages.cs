@@ -14,11 +14,15 @@ public static class ExternalMessages
     public const string UserIdIsNull = "User ID is null!";
 
     public const string SecretKeyIsNull = "Secret key is null!";
+    public const string EncryptionKeyIsNull = "Encryption key is null!";
     public const string IssuerIsNull = "Issuer is null!";
     public const string AudienceIsNull = "Audience is null!";
 
     public const string EmailIsNotFound = "Email is not found!";
     public const string PasswordIsInvalid = "Invalid password!";
+
+    public const string TokenStringIsNull = "Token string is null!";
+    public const string TokenStringIsEmpty = "Token string is empty!";
 
 
 }
