@@ -1,9 +1,11 @@
 using BaseEFAPI.MVCS.Services.Context;
 using BaseEFAPI.MVCS.Services.Registration.Interfaces;
+using Microsoft.AspNetCore.Identity;
 
 public sealed class RegistrationService : IRegistrationService
 {
     private readonly IUserRepository _userRepository;
+    private readonly IPasswordHasher<ApplicationUserModel> _passwordHasher = new PasswordHasher<ApplicationUserModel>();
 
     public RegistrationService(IUserRepository userRepository)
     {
@@ -28,17 +30,19 @@ public sealed class RegistrationService : IRegistrationService
     /// </summary>
     /// <param name="user"></param>
     /// <returns></returns>
-    public async Task<SignUpResponseModel> RegisterUserAsync(ApplicationUserModel user)
+    public async Task<SignUpResponseModel> RegisterUserAsync(ApplicationUserModel model)
     {
         // NULL CHECKS
-        if (user == null) { throw new ArgumentNullException("User model is null."); }
-        if (string.IsNullOrEmpty(user.Username)) { throw new ArgumentNullException("Username is null!"); }
-        if (string.IsNullOrEmpty(user.Email)) { throw new ArgumentNullException("Email is null!"); }
-        if (string.IsNullOrEmpty(user.HashedPassword)) { throw new ArgumentNullException("HashedPassword is null!"); }
-        if (string.IsNullOrEmpty(user.UserType)) { throw new ArgumentNullException("UserType is null!"); }
+        if (model == null) { throw new ArgumentNullException("User model is null."); }
+        if (string.IsNullOrEmpty(model.UserName)) { throw new ArgumentNullException("Username is null!"); }
+        if (string.IsNullOrEmpty(model.Email)) { throw new ArgumentNullException("Email is null!"); }
+        if (string.IsNullOrEmpty(model.PasswordHash)) { throw new ArgumentNullException("HashedPassword is null!"); }
+        if (string.IsNullOrEmpty(model.UserType)) { throw new ArgumentNullException("UserType is null!"); }
+
+        model.PasswordHash = _passwordHasher.HashPassword(model, model.PasswordHash);
 
         // ADD USER TO DATABASE
-        SignUpResponseModel response = await _userRepository.AddSignUpAsync(user);
+        SignUpResponseModel response = await _userRepository.AddUserAsync(model);
 
         return response;
     }

@@ -1,8 +1,88 @@
+using System.Security.Claims;
+using System.Text;
+using BaseEFAPI.MVCS.Services.Authentication.Implementations;
+using BaseEFAPI.MVCS.Services.Authentication.Interfaces;
 using BaseEFAPI.MVCS.Services.Context;
 using BaseEFAPI.MVCS.Services.Registration.Interfaces;
+using BaseEFAPI.MVCS.Services.SignIn.Implementations;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddLogging(builder => builder.AddConsole());
+
+// ADD SERVICES TO THE CONTAINER
+builder.Services.AddAuthorization();
+
+string? issuer = builder.Configuration["Authentication:JwtSettings:Issuer"];
+string? audience = builder.Configuration["Authentication:JwtSettings:Audience"];
+string? secretKey = builder.Configuration["Authentication:JwtSettings:SecretKey"];
+string? encryptionKey = builder.Configuration["Authentication:JwtSettings:EncryptionKey"];
+
+if (string.IsNullOrEmpty(issuer))
+{
+    Console.WriteLine("JWT issuer is missing!");
+    Environment.Exit(1);
+}
+if (string.IsNullOrEmpty(audience))
+{
+    Console.WriteLine("JWT audience is missing!");
+    Environment.Exit(1);
+}
+
+if (string.IsNullOrEmpty(secretKey))
+{
+    Console.WriteLine("JWT secret key is missing!");
+    Environment.Exit(1);
+}
+
+if (string.IsNullOrEmpty(encryptionKey))
+{
+    Console.WriteLine("JWT encryption key is missing!");
+    Environment.Exit(1);
+}
+
+SymmetricSecurityKey signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
+SymmetricSecurityKey encryptionSecurityKey = new SymmetricSecurityKey(Convert.FromBase64String(encryptionKey));
+
+// ADD AUTHENTICATION SERVICES TO THE CONTAINER
+builder.Services
+    .AddAuthentication(
+        JwtBearerDefaults.AuthenticationScheme
+    )
+    .AddJwtBearer(options =>
+    {
+        options.MapInboundClaims = false;
+
+        options.TokenValidationParameters =
+            new TokenValidationParameters
+            {
+                // Decrypt JWE
+                TokenDecryptionKey = encryptionSecurityKey,
+
+                // Verify signed JWT inside
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = signingKey,
+
+                // Validate issuer
+                ValidateIssuer = true,
+                ValidIssuer = issuer,
+
+                // Validate audience
+                ValidateAudience = true,
+                ValidAudience = audience,
+
+                // Validate expiration
+                ValidateLifetime = true,
+
+                ClockSkew = TimeSpan.FromSeconds(30),
+
+                RoleClaimType = ClaimTypes.Role
+            };
+    });
 
 string? connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
@@ -12,7 +92,6 @@ if (string.IsNullOrEmpty(connectionString) == true)
     Environment.Exit(0);
 }
 
-// TODO: ADD DB CONTEXT TO THE CONTAINER
 // REGISTER THE REGISTRATION API DBCONTEXT WITH THE CONTAINER
 builder.Services.AddDbContext<RegistrationDbContext>(options =>
 options.UseSqlServer(
@@ -34,7 +113,10 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 });
 
 // TODO: ADD SERVICES TO THE CONTAINER
-builder.Services.AddScoped<IRegistrationService, RegistrationService>()
+builder.Services
+    .AddScoped<IRegistrationService, RegistrationService>()
+    .AddScoped<ISignInService, SignInService>()
+    .AddTransient<IJwtTokenService, JwtTokenService>()
     .AddTransient<IUserRepository, UserRepository>();
 
 // Configure the HTTP request pipeline.
