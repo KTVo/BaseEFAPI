@@ -193,4 +193,3 @@ docker-compose.override.yml
 docker-compose.override.yaml
 
 .fake
-appsettings.json
