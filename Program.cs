@@ -1,11 +1,13 @@
-using System.Security.Claims;
+using BaseEFAPI.MVCS.Services.Authentication;
 using System.Text;
 using BaseEFAPI.MVCS.Services.Authentication.Implementations;
 using BaseEFAPI.MVCS.Services.Authentication.Interfaces;
 using BaseEFAPI.MVCS.Services.Context;
 using BaseEFAPI.MVCS.Services.Registration.Interfaces;
 using BaseEFAPI.MVCS.Services.SignIn.Implementations;
+using BaseEFAPI.MVCS.Services.SignIn.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
@@ -49,6 +51,8 @@ SymmetricSecurityKey signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetByte
 SymmetricSecurityKey encryptionSecurityKey = new SymmetricSecurityKey(Convert.FromBase64String(encryptionKey));
 
 // ADD AUTHENTICATION SERVICES TO THE CONTAINER
+builder.Services.AddApplicationIdentity();
+
 builder.Services
     .AddAuthentication(
         JwtBearerDefaults.AuthenticationScheme
@@ -80,7 +84,7 @@ builder.Services
 
                 ClockSkew = TimeSpan.FromSeconds(30),
 
-                RoleClaimType = ClaimTypes.Role
+                RoleClaimType = "role"
             };
     });
 
@@ -146,6 +150,16 @@ else
 }
 
 WebApplication app = builder.Build();
+
+if (args.Contains("--upgrade-identity", StringComparer.Ordinal))
+{
+    await using AsyncServiceScope scope = app.Services.CreateAsyncScope();
+    await BaseEFAPI.Database.IdentityDatabaseUpgrade.RunAsync(
+        scope.ServiceProvider.GetRequiredService<RegistrationDbContext>(),
+        scope.ServiceProvider.GetRequiredService<ILookupNormalizer>());
+    app.Logger.LogInformation("Identity database upgrade completed.");
+    return;
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
