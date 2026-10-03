@@ -1,4 +1,8 @@
 # ==============================
+# Secrets
+# ==============================
+appsettings.json
+# ==============================
 # .NET / C# build output
 # ==============================
 bin/
@@ -34,8 +38,7 @@ artifacts/
 # ==============================
 # Application settings / secrets
 # ==============================
-appsettings.json
-appsettings.*.json
+appsettings.*.local.json
 
 # Allow sanitized example files to be committed
 !appsettings.Example.json
@@ -191,3 +194,6 @@ $RECYCLE.BIN/
 # ==============================
 docker-compose.override.yml
 docker-compose.override.yaml
+
+.fake
+appsettings.json
