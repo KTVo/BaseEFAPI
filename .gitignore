@@ -1,8 +1,4 @@
 # ==============================
-# Secrets
-# ==============================
-appsettings.json
-# ==============================
 # .NET / C# build output
 # ==============================
 bin/
@@ -38,6 +34,7 @@ artifacts/
 # ==============================
 # Application settings / secrets
 # ==============================
+appsettings.json
 appsettings.*.local.json
 
 # Allow sanitized example files to be committed
