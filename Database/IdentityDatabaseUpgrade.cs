@@ -10,6 +10,9 @@ public static class IdentityDatabaseUpgrade
     // Requires the columns from UpgradeApplicationUserToIdentity.sql.
     public static async Task RunAsync(RegistrationDbContext db, ILookupNormalizer normalizer)
     {
+        if (!db.Database.IsSqlServer())
+            throw new NotSupportedException("The existing Identity upgrade supports SQL Server only. PostgreSQL requires a reviewed PostgreSQL schema migration.");
+
         await db.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
         {
             db.ChangeTracker.Clear();
