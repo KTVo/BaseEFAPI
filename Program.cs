@@ -88,18 +88,28 @@ builder.Services
             };
     });
 
-string? connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+string? conStrMain = builder.Configuration.GetConnectionString("DefaultPostgres");
 
-if (string.IsNullOrEmpty(connectionString) == true)
+if (string.IsNullOrEmpty(conStrMain) == true)
 {
-    Console.WriteLine("Connection string 'DefaultConnection' not found!");
+    Console.WriteLine("Connection string for main database not found!");
     Environment.Exit(0);
 }
+
+string? conStrCache = builder.Configuration.GetConnectionString("DefaultRedis");
+
+if (string.IsNullOrEmpty(conStrCache) == true)
+{
+    Console.WriteLine("Connection string for database caching not found!");
+    Environment.Exit(0);
+}
+
+
 
 //// MSSQL - REGISTER THE REGISTRATION API DBCONTEXT WITH THE CONTAINER
 //builder.Services.AddDbContext<RegistrationDbContext>(options =>
 //options.UseSqlServer(
-//    connectionString: connectionString, sqlServerOptionsAction: sqlOptions =>
+//    connectionString: conStrMain, sqlServerOptionsAction: sqlOptions =>
 //    {
 //        sqlOptions.EnableRetryOnFailure(maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(30), errorNumbersToAdd: null);
 //    })
@@ -107,7 +117,14 @@ if (string.IsNullOrEmpty(connectionString) == true)
 
 // POSTGRES - REGISTER THE REGISTRATION API DBCONTEXT WITH THE CONTAINER
 builder.Services.AddDbContext<RegistrationDbContext>(options =>
-    options.UseNpgsql(connectionString));
+    options.UseNpgsql(conStrMain)
+    );
+
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = conStrCache;
+    options.InstanceName = "CineStackCache";
+});
 
 builder.Services.AddCors(options =>
 {
