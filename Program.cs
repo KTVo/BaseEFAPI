@@ -96,14 +96,26 @@ if (string.IsNullOrEmpty(connectionString) == true)
     Environment.Exit(0);
 }
 
-// REGISTER THE REGISTRATION API DBCONTEXT WITH THE CONTAINER
+//// MSSQL - REGISTER THE REGISTRATION API DBCONTEXT WITH THE CONTAINER
+//builder.Services.AddDbContext<RegistrationDbContext>(options =>
+//options.UseSqlServer(
+//    connectionString: connectionString, sqlServerOptionsAction: sqlOptions =>
+//    {
+//        sqlOptions.EnableRetryOnFailure(maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(30), errorNumbersToAdd: null);
+//    })
+//);
+
+// POSTGRES - REGISTER THE REGISTRATION API DBCONTEXT WITH THE CONTAINER
 builder.Services.AddDbContext<RegistrationDbContext>(options =>
-options.UseSqlServer(
-    connectionString: connectionString, sqlServerOptionsAction: sqlOptions =>
-    {
-        sqlOptions.EnableRetryOnFailure(maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(30), errorNumbersToAdd: null);
-    })
-);
+    options.UseNpgsql(connectionString));
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+        policy.WithOrigins("http://localhost")
+              .AllowAnyHeader()
+              .AllowAnyMethod());
+});
 
 
 // LEARN MORE ABOUT CONFIGURING SWAGGER/OPENAPI AT HTTPS://AKA.MS/ASPNETCORE/SWASHBUCKLE
@@ -151,6 +163,23 @@ else
 
 WebApplication app = builder.Build();
 
+if (args.Contains("--initialize-database", StringComparer.Ordinal))
+{
+    if (args.Contains("--upgrade-identity", StringComparer.Ordinal))
+        throw new InvalidOperationException("Run database initialization and the existing-database upgrade separately.");
+
+    await using AsyncServiceScope scope = app.Services.CreateAsyncScope();
+    var db = scope.ServiceProvider.GetRequiredService<RegistrationDbContext>();
+    bool created = await db.Database.EnsureCreatedAsync();
+    if (!created)
+        throw new InvalidOperationException(
+            "Database initialization was skipped because tables already exist. " +
+            "Check DefaultConnection, the schema, and the case-sensitive ApplicationUser table name. " +
+            "Existing databases require a reviewed schema migration; initialization does not upgrade them.");
+
+    app.Logger.LogInformation("Database initialized with ApplicationUser and the Identity tables.");
+    return;
+}
 if (args.Contains("--upgrade-identity", StringComparer.Ordinal))
 {
     await using AsyncServiceScope scope = app.Services.CreateAsyncScope();
