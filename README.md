@@ -13,7 +13,7 @@
 
 ## Local configuration
 
-Copy `appsettings.Example.json` to `appsettings.json` only when setting up a new checkout; do not overwrite an existing local configuration. The local file is ignored by Git. Fill in your SQL Server connection string, issuer, audience, and independent JWT signing/encryption keys. The example deliberately contains empty secrets and cannot start the application until configured.
+Copy `appsettings.Example.json` to `appsettings.json` only when setting up a new checkout; do not overwrite an existing local configuration. The local file is ignored by Git. Fill in the connection string for your selected database provider, issuer, audience, and independent JWT signing/encryption keys. The example deliberately contains empty secrets and cannot start the application until configured.
 
 Generate signing key material with `openssl rand -base64 48` and an encryption key with `openssl rand -base64 32`. Store the outputs only in your local configuration or secret manager. Never paste credentials into commits, logs, or issue reports.
 
@@ -27,6 +27,99 @@ Replace both JWT keys in every deployed issuer/validator and restart or redeploy
 
 After revocation, coordinate any Git history cleanup with repository collaborators; existing clones, forks, and artifacts may retain the old credentials. Do not restore credentials from history.
 
+## Switching between PostgreSQL and Microsoft SQL Server (MSSQL)
+
+Both provider packages are already referenced in `BaseEFAPI.csproj`. To switch databases, stop the API, select one provider in `Program.cs`, and update `ConnectionStrings:DefaultConnection` to match it. Keep only one active `AddDbContext<RegistrationDbContext>` registration.
+
+### PostgreSQL to MSSQL
+
+1. In `Program.cs`, comment out the active PostgreSQL `AddDbContext` block and uncomment the existing MSSQL block above it. Alternatively, replace the PostgreSQL block with:
+
+   ```csharp
+   builder.Services.AddDbContext<RegistrationDbContext>(options =>
+       options.UseSqlServer(connectionString, sqlOptions =>
+           sqlOptions.EnableRetryOnFailure(
+               maxRetryCount: 5,
+               maxRetryDelay: TimeSpan.FromSeconds(30),
+               errorNumbersToAdd: null)));
+   ```
+
+2. In your local `appsettings.json`, set a SQL Server connection string. For example, using Windows authentication and a trusted server certificate:
+
+   ```json
+   "ConnectionStrings": {
+     "DefaultConnection": "Server=localhost;Database=BaseEFAPI;Integrated Security=True;Encrypt=True;TrustServerCertificate=False"
+   }
+   ```
+
+   Replace the server and database with your SQL Server instance and database. For SQL authentication, replace `Integrated Security=True` with `User ID=YOUR_USER;Password=YOUR_PASSWORD`. For a local development server using a self-signed certificate, `TrustServerCertificate=True` bypasses certificate validation; use a trusted certificate for deployment.
+
+3. Prepare the target database using the instructions below, then restart the API.
+
+### MSSQL to PostgreSQL
+
+1. In `Program.cs`, comment out the MSSQL `AddDbContext` block and enable the PostgreSQL block:
+
+   ```csharp
+   builder.Services.AddDbContext<RegistrationDbContext>(options =>
+       options.UseNpgsql(connectionString));
+   ```
+
+2. In your local `appsettings.json`, replace the SQL Server connection string with an Npgsql connection string:
+
+   ```json
+   "ConnectionStrings": {
+     "DefaultConnection": "Host=localhost;Port=5432;Database=BaseEFAPI;Username=YOUR_USER;Password=YOUR_PASSWORD"
+   }
+   ```
+
+   Replace the placeholders with your PostgreSQL connection details.
+
+3. Prepare the target database using the instructions below, then restart the API.
+
+### Prepare the selected database
+
+Check whether `appsettings.Development.json`, user secrets, or the `ConnectionStrings__DefaultConnection` environment variable overrides your local connection string. The effective connection string must match the selected provider.
+
+For either provider, if the target database is new and empty, run:
+
+```sh
+dotnet run --project BaseEFAPI.csproj -- --initialize-database
+```
+
+Then start the API normally:
+
+```sh
+dotnet run --project BaseEFAPI.csproj
+```
+
+When switching back to a database that already has the compatible Identity schema, start the API normally without initializing it again. For an existing SQL Server database with the older user schema, follow the SQL Server Identity upgrade instructions below. Existing PostgreSQL schemas require a reviewed PostgreSQL migration.
+
+Switching providers changes which database the API reads and writes; it does not transfer users or other data between databases. If you need the same accounts on the new provider, plan a separate schema and data migration that preserves user IDs, password hashes, and Identity fields.
+
+## PostgreSQL database setup
+
+`Program.cs` currently selects PostgreSQL with `UseNpgsql`. Set `ConnectionStrings:DefaultConnection` to the intended PostgreSQL database using Npgsql connection-string syntax (Host, Port, Database, Username, Password).
+
+For a new, empty database, create the mapped user table and all Identity claims/login/token tables once, then start the API normally:
+
+```sh
+dotnet run --project BaseEFAPI.csproj -- --initialize-database
+```
+
+This explicit command uses the EF model and exits without starting the server. It requires database/schema creation permissions. It does not run automatically, drop tables, or upgrade existing schemas. If any tables already exist, it fails with guidance instead of reporting successful initialization. This repository has no EF migrations; `EnsureCreatedAsync` does not establish migration history. Future schema changes require a planned migration approach.
+
+If registration reports `42P01: relation "ApplicationUser" does not exist`, run these read-only queries against the same database used by the API:
+
+```sql
+SELECT current_database(), current_schema();
+SHOW search_path;
+SELECT table_schema, table_name
+FROM information_schema.tables
+WHERE lower(table_name) = 'applicationuser';
+```
+
+The model expects the exact quoted name `"ApplicationUser"`. An unquoted PostgreSQL table name becomes lowercase (`applicationuser`), which is a different name. If a user table already exists under another name or schema, review its columns and adapt the mapping or migrate the schema while preserving its data. Do not initialize or recreate that database as a substitute for an upgrade. The existing `--upgrade-identity` command and SQL script below support SQL Server only.
 ## Identity password policy and lockout
 
 Registration uses `UserManager.CreateAsync(user, password)` and returns HTTP 400 with Identity validation errors when rejected. Sign-in accepts email or username (email takes precedence if both are supplied), calls `CheckPasswordSignInAsync` with `lockoutOnFailure: true`, and returns a generic HTTP 401 when denied. JWT generation happens only after a successful check. Accounts with two-factor authentication enabled are denied until a second-factor flow is implemented.
