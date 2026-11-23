@@ -214,10 +214,13 @@ public sealed class UserRepository : IUserRepository
 
         try
         {
-            ApplicationUserModel? user = await _dBcontext
-                .ApplicationUser
-                .AsNoTracking()
-                .FirstOrDefaultAsync(u => u.Email == email);
+            IQueryable<ApplicationUserModel> query =
+                _dBcontext.ApplicationUser
+                    .AsNoTracking()
+                    .Where(u => u.Email == email);
+
+            ApplicationUserModel? user =
+                await query.FirstOrDefaultAsync();
 
             if (user == null)
             {
@@ -257,9 +260,14 @@ public sealed class UserRepository : IUserRepository
 
         try
         {
-            ApplicationUserModel? user = await _dBcontext.ApplicationUser
-                .AsNoTracking()
-                .FirstOrDefaultAsync(u => u.UserName == username);
+
+            IQueryable<ApplicationUserModel> query =
+                _dBcontext.ApplicationUser
+                    .AsNoTracking()
+                    .Where(u => u.UserName == username);
+
+            ApplicationUserModel? user =
+                await query.FirstOrDefaultAsync();
             
             if (user == null)
             {
